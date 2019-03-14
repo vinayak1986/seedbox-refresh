@@ -93,12 +93,21 @@ def get_download_location(file_name):
 
 # Write seedq entries in the required format.
 def write_seedq_rows(row):
-    if row['file_or_folder'] == 'file':
-        write_string = "queue pget -c -n 10 '" + row['file_name'] + "'" + " -o " + row['dl_folder'] + ";"
-        seed_q_writer.writerow([write_string])
-    else:
-        write_string = "queue mirror --verbose --parallel=35 -c '" + row['file_name'] + "'" + " " + row['dl_folder'] + ";"
-        seed_q_writer.writerow([write_string])
+	if row['file_or_folder'] == 'file':
+		write_string = "queue pget -c -n 10 '" + row['file_name'] + "'" + " -o " + row['dl_folder'] + ";"
+		seed_q_writer.writerow([write_string])
+	else:
+		with srv.cd(row['file_name']):
+			dir_files = srv.listdir()
+			files = ' '.join(dir_files) + ' '
+			if re.search('\.mkv\s|\.mp4\s|\.avi\s|\.flv\s', files):
+				for file in dir_files:
+					write_string = "queue pget -c -n 10 '" + row['file_name'] + "/" + file + "'" + " -o " + row['dl_folder'] + ";"
+					seed_q_writer.writerow([write_string])
+			else:
+				write_string = "queue mirror --verbose --parallel=35 -c '" + row['file_name'] + "'" + " " + row['dl_folder'] + ";"
+				seed_q_writer.writerow([write_string])
+	return None
 
 if __name__ == '__main__':
 	# Get current & previous run times.
@@ -137,7 +146,7 @@ if __name__ == '__main__':
 		seed_q_writer = writer(seed_q)
 		seed_q_writer.writerow(['open ' + 'sftp://' + seedbox_url + ':22;'])
 		seed_q_writer.writerow(['user ' + user_name + ' ' + pass_word + ';'])
-		seed_q_writer.writerow(['cd /' + download_dir + ';'])
+		seed_q_writer.writerow(['cd ' + download_dir + ';'])
 		files_df.apply(write_seedq_rows, axis = 1)
 		seed_q_writer.writerow(['queue;'])
 		seed_q_writer.writerow(['wait;'])
