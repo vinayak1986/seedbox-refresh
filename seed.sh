@@ -23,7 +23,10 @@ find . -type f -regex ".+r[0-9]+$" -delete;
 find . -regex ".+[Ss]ample.+" -delete;
 find . -regex ".+[Ss]ample$" -exec rm -rf {} \;
 cd /mnt/library/Movies;
-find . -name "*.rar" -exec unrar x -o+ {} \;
+# Changed 2019-04-28 - Execute unrar in each file's directory to
+# take care of the issue with SPARKS movie torrents.
+#find . -name "*.rar" -exec unrar x -o+ {} \;
+find . -name "*.rar" -execdir unrar e -r -o+ {} \;
 find . -type f -name "*.rar" -exec rm -f {} \;
 find . -type f -name "*.nfo" -exec rm -f {} \;
 find . -type f -name "*.sfv" -exec rm -f {} \;
